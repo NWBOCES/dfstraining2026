@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BHBCC DFS Training — June 2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1a2744; --navy-mid: #243258; --navy-light: #2e3f6e;
+    --teal: #1a7f74; --teal-light: #e8f5f3; --teal-mid: #c2e8e4;
+    --amber: #d97706; --amber-light: #fef3c7;
+    --red: #b91c1c; --red-light: #fee2e2;
+    --green: #166534; --green-light: #dcfce7; --green-mid: #86efac;
+    --gray-50: #f8f9fa; --gray-100: #f1f3f5; --gray-200: #e9ecef;
+    --gray-300: #dee2e6; --gray-400: #ced4da; --gray-500: #adb5bd;
+    --gray-600: #6c757d; --gray-700: #495057; --gray-800: #343a40; --gray-900: #212529;
+    --white: #ffffff;
+    --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-100); color: var(--gray-900); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+  .site-header { background: var(--navy); color: white; }
+  .header-inner { max-width: 1100px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-brand { display: flex; align-items: center; gap: 14px; }
+  .header-logo { width: 42px; height: 42px; background: var(--teal); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
+  .header-title { font-size: 16px; font-weight: 600; color: white; line-height: 1.3; }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .header-badge { background: var(--teal); color: white; font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .nav-bar { background: var(--navy-mid); border-bottom: 1px solid var(--navy-light); }
+  .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; }
+  .nav-tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; transition: color 0.15s, border-color 0.15s; }
+  .nav-tab:hover { color: rgba(255,255,255,0.9); }
+  .nav-tab.active { color: white; border-bottom-color: var(--teal); }
+  .page { display: none; }
+  .page.active { display: block; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+  .card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .card-title { font-size: 16px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.02em; text-transform: uppercase; }
+  .badge-current { background: #dbeafe; color: #1e40af; }
+  .badge-locked { background: var(--gray-100); color: var(--gray-500); }
+  .badge-done { background: var(--green-light); color: var(--green); }
+  .badge-pass { background: var(--green-light); color: var(--green); }
+  .badge-fail { background: var(--red-light); color: var(--red); }
+  .badge-warn { background: var(--amber-light); color: var(--amber); }
+  .step-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .step-num { width: 28px; height: 28px; background: var(--navy); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .progress-wrap { background: var(--white); border-bottom: 1px solid var(--gray-200); }
+  .progress-inner { max-width: 1100px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .progress-track { flex: 1; min-width: 100px; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 6px; background: var(--teal); border-radius: 3px; transition: width 0.5s ease; }
+  .progress-label { font-size: 13px; color: var(--gray-600); white-space: nowrap; }
+  .timer-pill { display: flex; align-items: center; gap: 6px; background: var(--navy); color: white; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .video-wrap { width: 100%; aspect-ratio: 16/9; background: var(--gray-900); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; }
+  .video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+  .training-layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+  .slides-sidebar { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); position: sticky; top: 16px; overflow: hidden; }
+  .sidebar-header { background: var(--navy); color: white; padding: 14px 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .sidebar-preview { background: var(--teal-light); padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; border-bottom: 1px solid var(--gray-200); }
+  .sidebar-preview-icon { width: 56px; height: 56px; background: var(--teal); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
+  .sidebar-preview p { font-size: 12px; color: var(--gray-600); text-align: center; line-height: 1.4; }
+  .sidebar-open-btn { display: block; margin: 12px 16px; text-align: center; padding: 9px 16px; background: var(--teal); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; text-decoration: none; }
+  .sidebar-open-btn:hover { background: #145f56; }
+  .toc-wrap { max-height: 380px; overflow-y: auto; padding-bottom: 8px; }
+  .toc-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-500); padding: 10px 16px 4px; }
+  .toc-item { padding: 5px 16px; font-size: 12px; color: var(--gray-600); line-height: 1.4; }
+  .toc-item:hover { background: var(--gray-50); color: var(--gray-900); }
+  input[type="text"] { width: 100%; padding: 10px 14px; border: 1px solid var(--gray-300); border-radius: var(--radius-sm); font-size: 14px; color: var(--gray-900); background: var(--white); margin-bottom: 12px; outline: none; transition: border-color 0.15s; }
+  input[type="text"]:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(26,127,116,0.12); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-primary:hover { background: #145f56; }
+  .btn-primary:disabled { background: var(--gray-300); color: var(--gray-500); cursor: not-allowed; }
+  .btn-navy { background: var(--navy); color: white; }
+  .btn-navy:hover { background: var(--navy-mid); }
+  .btn-outline { background: white; color: var(--gray-700); border: 1px solid var(--gray-300); }
+  .btn-outline:hover { background: var(--gray-50); }
+  .btn-danger { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+  .btn-danger:hover { background: #fecaca; }
+  .locked { opacity: 0.4; pointer-events: none; user-select: none; }
+  .alert { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+  .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .alert-warn { background: var(--amber-light); border: 1px solid #fcd34d; color: #92400e; }
+  .alert-success { background: var(--green-light); border: 1px solid var(--green-mid); color: var(--green); }
+  .q-block { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--gray-100); }
+  .q-block:last-of-type { border-bottom: none; }
+  .q-num-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--teal); margin-bottom: 6px; }
+  .q-text { font-size: 15px; font-weight: 600; color: var(--gray-900); margin-bottom: 12px; line-height: 1.5; }
+  .opt { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; font-size: 14px; line-height: 1.45; color: var(--gray-800); transition: all 0.12s; background: var(--white); }
+  .opt:hover { border-color: var(--teal); background: var(--teal-light); }
+  .opt.correct { border-color: var(--green-mid); background: var(--green-light); color: var(--green); pointer-events: none; }
+  .opt.incorrect { border-color: #fca5a5; background: var(--red-light); color: var(--red); pointer-events: none; }
+  .opt.neutral { pointer-events: none; color: var(--gray-400); }
+  .opt input[type="radio"] { margin-top: 3px; flex-shrink: 0; accent-color: var(--teal); }
+  .q-feedback { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-top: 8px; line-height: 1.55; }
+  .q-feedback.correct { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+  .q-feedback.incorrect { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+  .score-display { text-align: center; padding: 32px 24px; border-radius: var(--radius-lg); margin-bottom: 16px; }
+  .score-display.pass { background: var(--green-light); border: 2px solid var(--green-mid); }
+  .score-display.fail { background: var(--red-light); border: 2px solid #fca5a5; }
+  .score-big { font-size: 56px; font-weight: 800; line-height: 1; }
+  .score-display.pass .score-big { color: var(--green); }
+  .score-display.fail .score-big { color: var(--red); }
+  .score-sub { font-size: 14px; margin-top: 8px; }
+  .score-display.pass .score-sub { color: #14532d; }
+  .score-display.fail .score-sub { color: #7f1d1d; }
+  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .log-table th { text-align: left; padding: 10px 12px; background: var(--gray-50); color: var(--gray-600); font-weight: 600; font-size: 11px; border-bottom: 2px solid var(--gray-200); text-transform: uppercase; letter-spacing: 0.04em; }
+  .log-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); color: var(--gray-800); vertical-align: middle; }
+  .log-table tr:hover td { background: var(--gray-50); }
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--gray-500); }
+  .done-hero { background: var(--navy); border-radius: var(--radius-lg); padding: 40px 32px; text-align: center; color: white; margin-bottom: 16px; }
+  .done-hero h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .done-hero p { font-size: 14px; color: rgba(255,255,255,0.7); }
+  .login-hero { background: var(--navy); border-radius: var(--radius-lg); padding: 32px; color: white; margin-bottom: 20px; display: flex; gap: 24px; align-items: flex-start; }
+  .login-hero-icon { width: 56px; height: 56px; flex-shrink: 0; background: var(--teal); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .login-hero h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .login-hero p { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .log-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+  @media (max-width: 680px) { .training-layout { grid-template-columns: 1fr; } .slides-sidebar { position: static; } .login-hero { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="header-logo">NW</div>
+      <div>
+        <div class="header-title">Big Horn Basin Children's Center</div>
+        <div class="header-sub">NW BOCES &mdash; Department of Family Services Training</div>
+      </div>
+    </div>
+    <div class="header-badge">June 2026</div>
+  </div>
+</header>
+
+<div class="nav-bar">
+  <div class="nav-inner">
+    <button class="nav-tab active" onclick="switchTab('train')">&#127979; Staff Training</button>
+    <button class="nav-tab" onclick="switchTab('log')">&#128203; Completion Log</button>
+  </div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div id="page-login" class="page active">
+  <div class="container">
+    <div id="tab-train-login">
+      <div class="login-hero">
+        <div class="login-hero-icon">&#127891;</div>
+        <div>
+          <h1>DFS Compliance Training &mdash; June 2026</h1>
+          <p>This make-up training covers DFS rules and regulations, restraint and seclusion standards, trauma-informed care, and critical incident reporting. Complete all four steps in order. The slide deck is available as a reference panel throughout both videos.</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card" style="margin:0">
+          <div class="card-title">Steps to complete</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px"><div class="step-dot">1</div><span>Video &mdash; Part 1 of 2</span></div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px"><div class="step-dot">2</div><span>Video &mdash; Part 2 of 2</span></div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px"><div class="step-dot">3</div><span>Knowledge check quiz (75% to pass)</span></div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:14px"><div class="step-dot">4</div><span>Completion acknowledgment</span></div>
+          </div>
+        </div>
+        <div class="card" style="margin:0">
+          <div class="card-title">Before you begin</div>
+          <p style="font-size:13px;color:var(--gray-600);margin:8px 0 12px">The 43-slide presentation is available as a reference panel throughout both videos. You can open it at any time during training.</p>
+          <div class="alert alert-warn" style="margin:0"><span>&#9888;</span><span><strong>Do not close this window</strong> during training &mdash; your time is being tracked.</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:16px">&#128100; Enter your information to begin</div>
+        <input type="text" id="inp-name" placeholder="Full name" />
+        <input type="text" id="inp-id" placeholder="Employee ID or job title" />
+        <div id="login-err" style="color:#b91c1c;font-size:13px;margin-bottom:12px;display:none">&#9888; Please enter both your name and employee ID before starting.</div>
+        <button class="btn btn-primary" onclick="startTraining()" style="width:100%;justify-content:center;padding:13px;">Begin training &rarr;</button>
+      </div>
+    </div>
+    <div id="tab-log-login" style="display:none">
+      <div class="log-actions">
+        <h2 style="font-size:18px;font-weight:700">Completion log</h2>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-outline" onclick="exportCSV()">&#8659; Export CSV</button>
+          <button class="btn btn-danger" onclick="clearLog()">&#128465; Clear log</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="log-wrap"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRAINING PAGE -->
+<div id="page-train" class="page">
+  <div class="progress-wrap">
+    <div class="progress-inner">
+      <div class="progress-track"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+      <span class="progress-label" id="step-lbl">Step 1 of 4</span>
+      <div class="timer-pill">&#9201; <span id="elapsed">0:00</span></div>
+      <span id="trainee-name" style="font-size:13px;color:var(--gray-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px"></span>
+    </div>
+  </div>
+  <div class="container">
+    <div class="training-layout">
+      <div id="main-col">
+
+        <div id="blk1" class="card">
+          <div class="step-hdr">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="step-num">1</div>
+              <span class="card-title" style="margin:0">Video &mdash; Part 1 of 2</span>
+            </div>
+            <span class="badge badge-current" id="b1">&#9654; Current</span>
+          </div>
+          <div class="video-wrap">
+            <iframe src="https://drive.google.com/file/d/1QD0PObIQK9hdrlIbqhrDLi-5hjqKrsKx/preview" allowfullscreen title="DFS Training Video Part 1"></iframe>
+          </div>
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Watch the full video. Use the slide deck panel on the right as a reference while watching.</p>
+          <button class="btn btn-primary" onclick="completeStep(1)" id="btn1">Mark video 1 complete &rarr;</button>
+        </div>
+
+        <div id="blk2" class="card locked">
+          <div class="step-hdr">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="step-num">2</div>
+              <span class="card-title" style="margin:0">Video &mdash; Part 2 of 2</span>
+            </div>
+            <span class="badge badge-locked" id="b2">&#128274; Locked</span>
+          </div>
+          <div class="video-wrap">
+            <iframe src="https://drive.google.com/file/d/1cokVM0BO5RDX2XPLHA4pFa9lTqQm6Bht/preview" allowfullscreen title="DFS Training Video Part 2"></iframe>
+          </div>
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Watch the full video. Continue using the slide deck panel as a reference.</p>
+          <button class="btn btn-primary" onclick="completeStep(2)" id="btn2">Mark video 2 complete &rarr;</button>
+        </div>
+
+        <div id="blk3" class="card locked">
+          <div class="step-hdr">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="step-num">3</div>
+              <span class="card-title" style="margin:0">Knowledge check</span>
+            </div>
+            <span class="badge badge-locked" id="b3">&#128274; Locked</span>
+          </div>
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:16px">Answer all 8 questions. You will receive immediate feedback after each answer. A score of <strong>75% or higher</strong> is required to proceed.</p>
+          <div id="quiz-body"></div>
+          <div id="quiz-actions" style="display:none;margin-top:8px">
+            <button class="btn btn-navy" onclick="submitQuiz()">Submit quiz &rarr;</button>
+          </div>
+          <div id="quiz-result" style="display:none;margin-top:16px"></div>
+          <div id="quiz-pass-actions" style="display:none;margin-top:12px">
+            <button class="btn btn-primary" onclick="completeStep(3)" id="btn3">Proceed to acknowledgment &rarr;</button>
+          </div>
+          <div id="quiz-retry-actions" style="display:none;margin-top:12px">
+            <button class="btn btn-outline" onclick="retakeQuiz()">&#8635; Retake quiz</button>
+          </div>
+        </div>
+
+        <div id="blk4" class="card locked">
+          <div class="step-hdr">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="step-num">4</div>
+              <span class="card-title" style="margin:0">Acknowledgment</span>
+            </div>
+            <span class="badge badge-locked" id="b4">&#128274; Locked</span>
+          </div>
+          <p style="font-size:14px;color:var(--gray-700);margin-bottom:16px;line-height:1.6">By clicking below, I confirm that I personally watched both DFS training videos, reviewed the accompanying slide deck, and completed the knowledge check for the BHBCC DFS make-up training session &mdash; June 2026.</p>
+          <button class="btn btn-primary" onclick="completeStep(4)" id="btn4">I confirm I completed all training &rarr;</button>
+        </div>
+
+        <div id="done-block" style="display:none">
+          <div class="alert alert-success" style="font-size:14px;padding:16px">
+            &#10004; <strong>Training complete!</strong>&nbsp; <span id="done-summary"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slides-sidebar">
+        <div class="sidebar-header">&#128196; Slide deck reference</div>
+        <div style="background:var(--navy);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <button id="slide-prev" onclick="slideNav(-1)" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:16px;line-height:1">&#8249;</button>
+          <span id="slide-num" style="font-size:12px;color:rgba(255,255,255,0.8);font-weight:500"></span>
+          <button id="slide-next" onclick="slideNav(1)" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:16px;line-height:1">&#8250;</button>
+        </div>
+        <div style="height:4px;background:#243258;"><div id="slide-progress" style="height:4px;background:var(--teal);transition:width 0.3s;width:0%"></div></div>
+        <div style="padding:12px 14px;min-height:200px;">
+          <div id="slide-title" style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;line-height:1.4"></div>
+          <div id="slide-body" style="font-size:12px;color:var(--gray-700);line-height:1.6"></div>
+        </div>
+        <a class="sidebar-open-btn" href="https://docs.google.com/presentation/d/1YvsnIjXWnyqXX5TUYYPG65_X0eRva8Er/present" target="_blank">&#128279; Open full slide deck</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DONE PAGE -->
+<div id="page-done" class="page">
+  <div class="container" style="max-width:640px">
+    <div class="done-hero">
+      <div style="font-size:56px;margin-bottom:12px">&#10004;</div>
+      <h2>Training complete</h2>
+      <p id="done-msg"></p>
+    </div>
+    <div class="card">
+      <p style="font-size:14px;color:var(--gray-600);margin-bottom:16px">Your completion has been recorded. You may close this window. Jackie Frankson will review your record in the Completion Log tab.</p>
+      <button class="btn btn-outline" onclick="resetPortal()">Train another staff member</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var ST={name:'',id:'',elapsed:0,interval:null,step:1,times:{1:null,2:null,3:null,4:null},quizScore:null,quizAttempts:0};
+var QUESTIONS=[
+  {q:"What is the primary objective of the DFS Substitute Care Licenser?",opts:["To provide direct therapy to residents","To ensure facility compliance with state statutes and certification standards to protect children's safety","To manage staffing schedules at residential facilities","To approve Individual Service Plan changes"],correct:1,feedback:"The Substitute Care Licenser's primary objective is ensuring facility compliance with state statutes and certification standards to protect the safety and well-being of children in residential care (Slide 1)."},
+  {q:"Which of the following behaviors meets the criteria for 'imminent risk' justifying physical restraint?",opts:["A youth refuses to go to class and sits on the floor","A youth was aggressive yesterday but is calm now","A youth is actively punching and choking a staff member","A youth is swearing and yelling at staff"],correct:2,feedback:"Active physical assault such as punching or choking a staff member constitutes imminent risk of physical harm and may justify restraint. Verbal non-compliance and passive resistance do NOT meet the criteria (Slides 17-21)."},
+  {q:"Under DFS rules, seclusion may be used as:",opts:["A routine consequence when a youth refuses to follow directions","A cool-down strategy after every restraint","A punishment for repeated property damage","An emergency safety intervention only when imminent risk is actively present"],correct:3,feedback:"Seclusion is strictly an emergency intervention used only when there is imminent risk of physical harm. It is explicitly prohibited as punishment, discipline, staff convenience, or a routine cool-down pipeline (Slides 23-24)."},
+  {q:"When must a physical restraint be discontinued?",opts:["After a minimum of 15 minutes regardless of the youth's behavior","When the supervisor arrives on scene","The moment the youth no longer poses an imminent physical threat","At the end of the shift when paperwork can be completed"],correct:2,feedback:"A restraint must be discontinued the moment the youth no longer poses an imminent physical threat, regardless of initial authorization duration (Slide 22)."},
+  {q:"How soon must the DFS Critical Incident Report form be submitted to the certifying authority?",opts:["Within 24 hours","Within two (2) working days","Within one week","Within the same shift"],correct:1,feedback:"The DFS CIR form must be submitted to the certifying authority within two (2) working days of the incident. Verbal notification to the legal guardian must happen immediately (Slides 28-29)."},
+  {q:"Which best reflects a trauma-informed understanding of a youth's outburst?",opts:["The youth is willfully defiant and needs stricter consequences","The outburst is likely a neurological stress response driven by a hyperaroused amygdala","The youth is manipulating staff to avoid responsibilities","The behavior is a choice that should result in loss of privileges"],correct:1,feedback:"Severe trauma alters brain development, keeping the amygdala in a state of hyperarousal. Outbursts are generally involuntary neurological stress responses, not willful defiance, which is why punitive approaches are ineffective (Slides 8-9)."},
+  {q:"A staff member places a youth in seclusion immediately after a restraint ends because the youth 'needs to calm down.' This is:",opts:["Proper - seclusion is a standard cool-down tool","Proper - transitioning from restraint to seclusion is always authorized","Improper - seclusion after restraint requires a fresh, independent assessment confirming ongoing imminent danger","Proper - staff discretion is allowed when managing high-risk youth"],correct:2,feedback:"Placing a youth in seclusion immediately after a restraint ends is improper unless a fresh, independent emergency safety assessment confirms ongoing imminent danger. Restraint and seclusion are not sequential steps (Slide 23)."},
+  {q:"Within what timeframe must a debriefing session occur after a restraint or seclusion incident?",opts:["Within 4 hours, before the next meal","Within 24 hours, but only after the resident reaches the stabilization phase","Within 48 hours, at the next scheduled team meeting","By end of shift on the same day"],correct:1,feedback:"A face-to-face debriefing must occur within 24 hours of the restraint, but only after the resident has reached the stabilization phase. Staff must also follow up the day after the debriefing (Slide 27)."}
+];
+var userAnswers=[];
+var answered=[];
+
+function showPage(id){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
+
+function switchTab(t){
+  document.getElementById('tab-train-login').style.display=t==='train'?'':'none';
+  document.getElementById('tab-log-login').style.display=t==='log'?'':'none';
+  document.querySelectorAll('.nav-tab').forEach(function(el,i){el.classList.toggle('active',(i===0&&t==='train')||(i===1&&t==='log'));});
+  if(t==='log')renderLog();
+}
+
+function startTraining(){
+  var n=document.getElementById('inp-name').value.trim();
+  var e=document.getElementById('inp-id').value.trim();
+  if(!n||!e){document.getElementById('login-err').style.display='block';return;}
+  document.getElementById('login-err').style.display='none';
+  ST.name=n;ST.id=e;ST.elapsed=0;ST.step=1;ST.times={1:null,2:null,3:null,4:null};ST.quizScore=null;ST.quizAttempts=0;
+  document.getElementById('trainee-name').textContent=n;
+  clearInterval(ST.interval);
+  ST.interval=setInterval(function(){ST.elapsed++;var m=Math.floor(ST.elapsed/60),s=ST.elapsed%60;document.getElementById('elapsed').textContent=m+':'+(s<10?'0':'')+s;},1000);
+  buildQuiz();updateProg();showPage('page-train');
+}
+
+function buildQuiz(){
+  userAnswers=new Array(QUESTIONS.length).fill(null);
+  answered=new Array(QUESTIONS.length).fill(false);
+  var html='';
+  QUESTIONS.forEach(function(q,qi){
+    html+='<div class="q-block" id="qb'+qi+'">';
+    html+='<div class="q-num-label">Question '+(qi+1)+' of '+QUESTIONS.length+'</div>';
+    html+='<div class="q-text">'+q.q+'</div>';
+    q.opts.forEach(function(opt,oi){
+      html+='<div class="opt" id="opt'+qi+'_'+oi+'" onclick="selectOpt('+qi+','+oi+')">';
+      html+='<input type="radio" name="q'+qi+'" value="'+oi+'"> <span>'+opt+'</span></div>';
+    });
+    html+='<div class="q-feedback" id="fb'+qi+'" style="display:none"></div>';
+    html+='</div>';
+  });
+  document.getElementById('quiz-body').innerHTML=html;
+  document.getElementById('quiz-actions').style.display='none';
+  document.getElementById('quiz-result').style.display='none';
+  document.getElementById('quiz-pass-actions').style.display='none';
+  document.getElementById('quiz-retry-actions').style.display='none';
+}
+
+function selectOpt(qi,oi){
+  if(answered[qi])return;
+  answered[qi]=true;userAnswers[qi]=oi;
+  var q=QUESTIONS[qi];
+  q.opts.forEach(function(_,o){
+    var el=document.getElementById('opt'+qi+'_'+o);
+    el.style.pointerEvents='none';
+    if(o===q.correct)el.className='opt correct';
+    else if(o===oi&&oi!==q.correct)el.className='opt incorrect';
+    else el.className='opt neutral';
+  });
+  var fb=document.getElementById('fb'+qi);fb.style.display='';
+  if(oi===q.correct){fb.className='q-feedback correct';fb.innerHTML='&#10004; <strong>Correct.</strong> '+q.feedback;}
+  else{fb.className='q-feedback incorrect';fb.innerHTML='&#10008; <strong>Incorrect.</strong> '+q.feedback;}
+  if(answered.every(function(a){return a;}))document.getElementById('quiz-actions').style.display='';
+}
+
+function submitQuiz(){
+  var correct=0;
+  QUESTIONS.forEach(function(q,i){if(userAnswers[i]===q.correct)correct++;});
+  var pct=Math.round((correct/QUESTIONS.length)*100);
+  ST.quizScore=pct;ST.quizAttempts++;
+  document.getElementById('quiz-actions').style.display='none';
+  var passed=pct>=75;
+  var res=document.getElementById('quiz-result');res.style.display='';
+  res.innerHTML='<div class="score-display '+(passed?'pass':'fail')+'"><div class="score-big">'+pct+'%</div><div class="score-sub">'+correct+' of '+QUESTIONS.length+' correct &mdash; '+(passed?'&#10004; Passed! You may proceed to the acknowledgment.':'&#10008; Below 75% &mdash; please review your feedback above and retake the quiz.')+'</div></div>';
+  var b3=document.getElementById('b3');
+  if(passed){b3.textContent='&#10004; Passed '+pct+'%';b3.className='badge badge-pass';document.getElementById('quiz-pass-actions').style.display='';document.getElementById('quiz-retry-actions').style.display='none';}
+  else{document.getElementById('quiz-retry-actions').style.display='';document.getElementById('quiz-pass-actions').style.display='none';}
+}
+
+function retakeQuiz(){
+  buildQuiz();
+  var b3=document.getElementById('b3');b3.textContent='&#9654; Current';b3.className='badge badge-current';
+}
+
+function completeStep(n){
+  ST.times[n]=ST.elapsed;
+  if(n<4){
+    if(n!==2){var b=document.getElementById('b'+n);b.textContent='&#10004; Done';b.className='badge badge-done';}
+    var btn=document.getElementById('btn'+n);if(btn){btn.disabled=true;btn.textContent='Completed';}
+    ST.step=n+1;
+    var nxt=document.getElementById('blk'+(n+1));nxt.classList.remove('locked');
+    var nb=document.getElementById('b'+(n+1));nb.textContent='&#9654; Current';nb.className='badge badge-current';
+    document.getElementById('step-lbl').textContent='Step '+(n+1)+' of 4';
+    nxt.scrollIntoView({behavior:'smooth',block:'start'});
+  }else{
+    var b4=document.getElementById('b4');b4.textContent='&#10004; Done';b4.className='badge badge-done';
+    var btn4=document.getElementById('btn4');btn4.disabled=true;btn4.textContent='Completed';
+    clearInterval(ST.interval);ST.step=5;
+    document.getElementById('step-lbl').textContent='Complete';
+    document.getElementById('prog').style.width='100%';
+    var rec=saveRecord();
+    var m=Math.floor(rec.elapsed/60),s=rec.elapsed%60;
+    var summary=ST.name+' | '+rec.date+' | '+m+'m '+s+'s | Quiz: '+ST.quizScore+'%';
+    document.getElementById('done-block').style.display='';
+    document.getElementById('done-summary').textContent=summary;
+    setTimeout(function(){showPage('page-done');document.getElementById('done-msg').textContent=summary;},1400);
+  }
+  updateProg();
+}
+
+function updateProg(){document.getElementById('prog').style.width=Math.min(((ST.step-1)/4)*100,100)+'%';}
+
+function saveRecord(){
+  var rec={name:ST.name,empId:ST.id,date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString(),elapsed:ST.elapsed,t1:ST.times[1],t2:ST.times[2],t3:ST.times[3],t4:ST.times[4],quizScore:ST.quizScore,quizAttempts:ST.quizAttempts};
+  try{var arr=JSON.parse(localStorage.getItem('dfs_bhbcc_v1')||'[]');arr.push(rec);localStorage.setItem('dfs_bhbcc_v1',JSON.stringify(arr));}catch(e){}
+  return rec;
+}
+
+function renderLog(){
+  var records=[];
+  try{records=JSON.parse(localStorage.getItem('dfs_bhbcc_v1')||'[]');}catch(e){}
+  var c=document.getElementById('log-wrap');
+  if(!records.length){c.innerHTML='<div class="empty-state"><div style="font-size:40px;margin-bottom:12px">&#128203;</div><p>No completions recorded yet.</p></div>';return;}
+  var html='<table class="log-table"><thead><tr><th>Name</th><th>ID / Title</th><th>Date</th><th>Time in</th><th>Duration</th><th>Quiz</th><th>Tries</th><th>Status</th></tr></thead><tbody>';
+  records.slice().reverse().forEach(function(r){
+    var m=Math.floor(r.elapsed/60),s=r.elapsed%60;
+    var all=r.t1!==null&&r.t2!==null&&r.t3!==null&&r.t4!==null;
+    var passed=r.quizScore>=75;
+    html+='<tr><td>'+r.name+'</td><td>'+r.empId+'</td><td>'+r.date+'</td><td>'+r.time+'</td><td>'+m+'m '+s+'s</td><td><span class="badge '+(passed?'badge-pass':'badge-fail')+'">'+(r.quizScore!==null?r.quizScore+'%':'--')+'</span></td><td style="text-align:center">'+(r.quizAttempts||'--')+'</td><td><span class="badge '+(all?'badge-pass':'badge-warn')+'">'+(all?'Complete':'Partial')+'</span></td></tr>';
+  });
+  html+='</tbody></table>';
+  c.innerHTML=html;
+}
+
+function exportCSV(){
+  var records=[];
+  try{records=JSON.parse(localStorage.getItem('dfs_bhbcc_v1')||'[]');}catch(e){}
+  if(!records.length){alert('No records to export.');return;}
+  var hdr=['Name','Employee ID / Title','Date','Time in','Total seconds','Video 1 (sec)','Video 2 (sec)','Quiz passed (sec)','Acknowledged (sec)','Quiz score %','Quiz attempts','All steps complete'];
+  var rows=records.map(function(r){return[r.name,r.empId,r.date,r.time,r.elapsed,r.t1!==null?r.t1:'',r.t2!==null?r.t2:'',r.t3!==null?r.t3:'',r.t4!==null?r.t4:'',r.quizScore!==null?r.quizScore:'',r.quizAttempts||'',(r.t1!==null&&r.t2!==null&&r.t3!==null&&r.t4!==null)?'Yes':'Partial'];});
+  var csv=[hdr].concat(rows).map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='DFS_Training_Log_June2026.csv';a.click();URL.revokeObjectURL(url);
+}
+
+function clearLog(){if(confirm('Delete all completion records? This cannot be undone.')){localStorage.removeItem('dfs_bhbcc_v1');renderLog();}}
+
+function resetPortal(){
+  document.getElementById('inp-name').value='';document.getElementById('inp-id').value='';
+  [1,2,3,4].forEach(function(n){
+    var b=document.getElementById('b'+n);b.textContent=n===1?'&#9654; Current':'&#128274; Locked';b.className=n===1?'badge badge-current':'badge badge-locked';
+    var blk=document.getElementById('blk'+n);if(n>1)blk.classList.add('locked');else blk.classList.remove('locked');
+  });
+  document.getElementById('btn1').disabled=false;document.getElementById('btn1').textContent='Mark video 1 complete \u2192';
+  document.getElementById('btn2').disabled=false;document.getElementById('btn2').textContent='Mark video 2 complete \u2192';
+  document.getElementById('btn4').disabled=false;document.getElementById('btn4').textContent='I confirm I completed all training \u2192';
+  document.getElementById('done-block').style.display='none';
+  document.getElementById('step-lbl').textContent='Step 1 of 4';
+  document.getElementById('elapsed').textContent='0:00';
+  document.getElementById('prog').style.width='0%';
+  showPage('page-login');switchTab('train');
+}
+
+var SLIDES = [
+  {n:1, title:"DFS Compliance: Interventions and DFS Rules", body:"<strong>Role of the DFS Substitute Care Licenser</strong><br>The primary objective of the Substitute Care Licenser is to ensure facility compliance with state statutes and certification standards to protect the safety and well-being of children in residential care.<br><br>&#10003; Regular site visits and inspections<br>&#10003; Comprehensive policy and procedure reviews<br>&#10003; Investigation of critical incidents and reported concerns"},
+  {n:2, title:"Facility & Bed Capacity Overview", body:"5 Adoption Agencies &bull; 67 Crisis Shelter Beds (13 facilities) &bull; 99 Group Home Beds (16 facilities) &bull; 335 RTC &amp; PRTF Beds (7 facilities) &bull; 1 Private JDC &bull; 3 BOCES<br><br>Data reflects currently licensed and operating facility capacity for juvenile care and services."},
+  {n:3, title:"Incident Report Statistics (2025)", body:"Monthly average: <strong>357 incident reports</strong><br><br><strong>4,294</strong> Annual Total (avg. 11.76/day)<br>Peak Month: <strong>June</strong> &mdash; 16.30 incidents/day<br>Lowest Month: <strong>December</strong> &mdash; 7.19 incidents/day"},
+  {n:4, title:"2025 Investigation Analytics", body:"Total CIRs Reviewed: <strong>4,294</strong><br>Total Investigations: <strong>31</strong><br><br>Only <strong>0.72%</strong> of all reviewed CIRs result in a formal investigation."},
+  {n:5, title:"NW BOCES: Seclusion & Restraint Trends (2023–2026)", body:"2023: 74 CIRs &bull; Restraints: 12 &bull; Seclusion: 4 &bull; 5% seclusion rate<br>2024: 60 CIRs &bull; Restraints: 19 &bull; Seclusion: 13 &bull; 21% seclusion rate<br>2025: 90 CIRs &bull; Restraints: 34 &bull; Seclusion: 50 &bull; <strong>55% seclusion rate</strong> (highest in first half of 2025)<br>2026 YTD (5 months): 30 CIRs &bull; Restraints: 15 &bull; Seclusion: 13 &bull; 43% avg. rate"},
+  {n:6, title:"Additional Facility Metrics", body:"Facility Group A: 865 CIRs &bull; PR: 639 &bull; SE: 440 &bull; 50% seclusion rate<br>Facility Group B: 104 CIRs &bull; PR: 4 &bull; SE: 0 &bull; 0% seclusion rate<br>Facility C: 1,038 CIRs &bull; PR: 210 &bull; SE: 755 &bull; <strong>72% seclusion rate</strong>"},
+  {n:7, title:"De-escalation vs. Consequence: The Core Philosophy", body:"<strong>De-escalation / Baseline:</strong> Proactive, therapeutic strategies designed to help a youth regain emotional regulation and return to a stable baseline.<br><br><strong>Punitive Use of Seclusion:</strong> Using seclusion as a consequence is PROHIBITED. It must never be assigned for fixed timeframes as punishment.<br><br><em>CORE MANDATE: Seclusion is a safety tool, not a disciplinary action.</em>"},
+  {n:8, title:"Trauma-Informed Care vs. Rigid Consequences", body:"Applying identical, rigid consequences to youth in a residential treatment facility does not work, especially for children with severe trauma.<br><br>While standard behavioral modifications assume a child is acting out intentionally and logically, traumatized youth are often operating from a state of survival, making uniform punishments ineffective and harmful."},
+  {n:9, title:"Neurological Alterations from Trauma", body:"<strong>Survival Mode Overrides Logic:</strong> Severe trauma alters brain development, keeping the child's amygdala in a constant state of hyperarousal.<br><br><strong>Impaired Prefrontal Cortex:</strong> Traumatized youth cannot access logical brain parts during outbursts, rendering them unable to map actions to future consequences.<br><br><strong>Fight-or-Flight Dominance:</strong> Outbursts are generally involuntary neurological stress responses rather than willful, premeditated defiance."},
+  {n:10, title:"Retraumatization and Power Dynamics", body:"<strong>Perceived Threats:</strong> Standard consequences like isolation or loss of privileges often mimic past abuse or abandonment, triggering trauma responses.<br><br><strong>Negative Beliefs:</strong> Blanket punishments confirm a child's belief that adults are unsafe and untrustworthy, deepening psychological wounds.<br><br><strong>Escalation Loops:</strong> Punitive environments trigger a cycle of worsening behavior and harsher restraints."},
+  {n:11, title:"Effective Alternatives: Trauma-Informed Frameworks", body:"<strong>Collaborative &amp; Proactive Solutions:</strong> Focuses on identifying specific lagging skills or triggers that cause behavior, rather than punishing the behavior itself.<br><br><strong>Attachment, Regulation, &amp; Competency:</strong> Stabilizes the environment through secure relationships, emotional regulation, and teaching targeted competencies.<br><br><strong>Trauma Systems Therapy:</strong> Adapts the residential milieu to match a child's specific emotional needs and environmental triggers."},
+  {n:12, title:"Collaborative vs. Punitive Approaches", body:"<table style='width:100%;font-size:11px;border-collapse:collapse'><tr style='background:#1a2744;color:white'><th style='padding:4px'>Component</th><th style='padding:4px'>Rigid Consequences</th><th style='padding:4px'>Trauma-Informed</th></tr><tr><td style='padding:4px;border:1px solid #ddd'>View of Behavior</td><td style='padding:4px;border:1px solid #ddd'>Willful defiance</td><td style='padding:4px;border:1px solid #ddd'>Coping/survival response</td></tr><tr><td style='padding:4px;border:1px solid #ddd'>Primary Goal</td><td style='padding:4px;border:1px solid #ddd'>Compliance &amp; control</td><td style='padding:4px;border:1px solid #ddd'>Emotional safety</td></tr><tr><td style='padding:4px;border:1px solid #ddd'>Staff Role</td><td style='padding:4px;border:1px solid #ddd'>Enforcers of rules</td><td style='padding:4px;border:1px solid #ddd'>Calming regulators</td></tr><tr><td style='padding:4px;border:1px solid #ddd'>Outcome</td><td style='padding:4px;border:1px solid #ddd'>High institutionalization risk</td><td style='padding:4px;border:1px solid #ddd'>Lifelong coping skills</td></tr></table>"},
+  {n:13, title:"When is Intervention Appropriate?", body:"<strong>&#10003; Mandatory Criteria:</strong> Staff may only utilize physical stops, restraints, or seclusion when a youth poses an <em>immediate risk of physical harm</em> to themselves or others.<br><br><strong>&#10007; Prohibited Use &mdash; physical intervention is NOT warranted for:</strong><br>&bull; Non-dangerous behavior<br>&bull; Property damage<br>&bull; Situations without immediate safety risk<br><br><em>Safety is the only justification for physical intervention.</em>"},
+  {n:14, title:"Physical Restraints and Seclusion: Prerequisites", body:"Facilities choosing to use physical restraint must adhere to strict training and certification mandates:<br><br>&bull; <strong>Nationally Recognized Training:</strong> Staff must be trained in a DFS-approved behavioral intervention program.<br>&bull; <strong>Annual Competency:</strong> Staff must complete annual training and a mandated competency test.<br>&bull; <strong>Supervisory Observation:</strong> Supervisors must periodically observe staff; failure requires immediate retraining."},
+  {n:15, title:"Purpose and Limitations of Physical Restraint", body:"Physical restraint is intended only to provide the degree of control that a child is currently unable to provide for themselves.<br><br>It is a temporary safety measure &mdash; not a therapeutic tool, not a punishment, and not a substitute for de-escalation."},
+  {n:16, title:"The Regulatory Standard", body:"Physical restraint and seclusion are governed by strict regulatory standards that define when, how, and for how long they may be used.<br><br>Staff must be familiar with all applicable DFS rules and facility policies before utilizing any physical intervention."},
+  {n:17, title:"Defining Imminent Risk", body:"<strong>Imminent risk</strong> means the danger is immediate, real, and present &mdash; not past, not potential, not hypothetical.<br><br>The risk must be occurring or about to occur within moments. Historical behavior or verbal threats alone do not constitute imminent risk without present behavioral indicators."},
+  {n:18, title:"Key Requirements for Imminent Risk", body:"For imminent risk to justify intervention, ALL of the following must be true:<br><br>&bull; The risk is <strong>physical</strong> (not emotional, verbal, or property-based)<br>&bull; The risk is <strong>immediate</strong> (happening now or within moments)<br>&bull; The risk is <strong>serious</strong> (likely to cause real injury)<br>&bull; Less restrictive interventions have been attempted or would be ineffective"},
+  {n:19, title:"Examples of Imminent Risk to Self", body:"&bull; Active self-injurious behavior causing or about to cause injury (e.g., head banging against concrete, cutting)<br>&bull; Running into traffic or toward a dangerous physical hazard<br>&bull; Actively attempting to ingest a harmful substance<br><br>Note: Verbal statements of suicidal ideation alone are NOT imminent risk without accompanying behavioral indicators."},
+  {n:20, title:"Examples of Imminent Risk to Others", body:"&bull; Actively punching, kicking, choking, or biting a staff member or peer<br>&bull; Wielding an object as a weapon with intent to strike<br>&bull; Physical assault in progress<br><br>Note: Swearing, yelling, verbal threats, or prior aggression that has ceased do NOT constitute current imminent risk."},
+  {n:21, title:"What is NOT Imminent Risk?", body:"&#10007; Refusing to follow directions or go to class<br>&#10007; Sitting on the floor or being passively non-compliant<br>&#10007; Verbal aggression, yelling, or swearing at staff<br>&#10007; Property damage without physical threat to persons<br>&#10007; Past aggressive behavior that has de-escalated<br>&#10007; Emotional dysregulation without physical aggression<br><br><em>If intervention occurs in any of these situations, it is improper and potentially abusive.</em>"},
+  {n:22, title:"Consequences of Unjustified Restraint", body:"Using restraint or seclusion without meeting the imminent risk standard may result in:<br><br>&bull; DFS investigation and potential decertification<br>&bull; Individual staff disciplinary action or termination<br>&bull; Criminal charges for assault<br>&bull; Civil liability<br>&bull; Retraumatization of the youth<br><br><strong>A restraint must be discontinued the moment the youth no longer poses an imminent physical threat.</strong>"},
+  {n:23, title:"Seclusion Protocols", body:"<strong>Authorized use:</strong> Emergency safety intervention only &mdash; when imminent risk of physical harm is actively present.<br><br><strong>PROHIBITED as:</strong> Punishment, discipline, staff convenience, routine cool-down, or automatic follow-up to restraint.<br><br><strong>Post-restraint to seclusion:</strong> Requires a fresh, independent emergency safety assessment confirming ongoing imminent danger. Restraint and seclusion are NOT sequential steps."},
+  {n:24, title:"Proper vs. Improper Transition Criteria", body:"<strong>PROPER: Seclusion may continue only while:</strong><br>&bull; Imminent physical risk remains actively present<br>&bull; Continuous monitoring is maintained<br>&bull; Less restrictive options have been exhausted<br><br><strong>IMPROPER: Seclusion must end when:</strong><br>&bull; Youth is no longer physically dangerous<br>&bull; Youth is calm, seated, or verbally engaging<br>&bull; A fixed time period has elapsed without re-assessment"},
+  {n:25, title:"Mandated Actions Post-Intervention", body:"Following any restraint or seclusion, staff must:<br><br>&bull; Document the incident completely and accurately<br>&bull; Notify the youth's legal guardian verbally (immediately) and in writing (within 2 working days)<br>&bull; Complete the DFS Critical Incident Report within 2 working days<br>&bull; Conduct a debriefing within 24 hours (after stabilization)<br>&bull; Notify supervisory staff per facility protocol"},
+  {n:26, title:"Mandatory Monitoring During Restraint", body:"Staff must continuously monitor physical well-being during any restraint:<br><br>&bull; <strong>Breathing &amp; Pulse:</strong> Continuous assessment of vital signs<br>&bull; <strong>Skin Color:</strong> Monitor for changes indicating oxygen deprivation<br>&bull; <strong>Respiratory Distress:</strong> Vigilance for choking, gasping, or airway difficulty<br><br><em>If any distress is noted, the restraint must be released immediately.</em>"},
+  {n:27, title:"Debriefing: The Critical Therapeutic Step", body:"A face-to-face debriefing must occur within <strong>24 hours</strong> of the restraint, but only after the resident has reached the stabilization phase.<br><br>&bull; <strong>Participants:</strong> Staff involved, the child, and any family/guardians requested by the child<br>&bull; <strong>Primary Goals:</strong> Minimize psychological harm, restore control to the resident, strategize alternative interventions<br>&bull; <strong>Follow-up:</strong> Staff must follow up the day after the debriefing"},
+  {n:28, title:"Critical Incident Reporting (CIR) and Documentation", body:"<strong>Critical Incidents (Immediate Reporting):</strong> Child fatality, serious injury, suicidal/homicidal behaviors, abuse/neglect allegations, fire/bomb threats/riots, law enforcement intervention, physical restraints, unscheduled psychiatric medications<br><br><strong>Standard Incidents:</strong> Self-harm (non-lethal), medication errors, seclusion or room restriction<br><br>&#128308; <strong>Verbal Notification:</strong> Immediately to legal guardian<br>&#128308; <strong>Written Submission:</strong> DFS CIR form within <strong>two (2) working days</strong>"},
+  {n:29, title:"Critical Incident Reporting: Section 4 Compliance", body:"<strong>Written Submission:</strong> DFS Critical Incident Report Form must be submitted to the certifying authority within <strong>two (2) working days</strong>.<br><br><strong>Verbal Report:</strong> Must be made immediately to the child's legal guardian (except for certain abuse allegations).<br><br>Organizations must maintain written policies and reporting forms for all incidents."},
+  {n:30, title:"Sample Physical Restraint Incident Report", body:"Child: Resident Lee &bull; Date: 2026-06-01 &bull; Time: 14:30 (4 min) &bull; Staff: L. Thurmond, M. Jones<br><br><strong>Precipitating Factors:</strong> Verbal aggression and chair throwing after being denied game room access. Immediate risk of harm to peers.<br><strong>Interventions:</strong> Proactive de-escalation (calm tone, choices, emotional containment). Resident refused; restraint required.<br><strong>Condition:</strong> Steady breathing/pulse. Calmed immediately; no injuries.<br><strong>Debrief (15:30):</strong> Control restored; strategized break-taking. Follow-up: 2026-06-02"},
+  {n:31, title:"Incident Reporting Form: Safe Haven", body:"Resident: Lee &bull; Date: 06-01-2026 @ 2:30 PM &bull; Type: Physical Restraint<br><br><strong>Incident:</strong> Resident became verbally aggressive after being denied game room access. Threw a chair across the day room, posing immediate risk to others.<br><strong>Intervention:</strong> Calm tone, choice to move. Physical restraint (4 min) required to prevent injury.<br><strong>Post:</strong> No injuries. Calm upon release. Coping skill identified. DFS Notified: 06-03-2026. Guardian: Notified."},
+  {n:32, title:"Sample Seclusion Incident Report", body:"Resident B &bull; 2026-06-01 &bull; 19:00–19:15 (15 min) &bull; Staff: K. Davis, P. Green (AOD Authorizer)<br><br><strong>Factors:</strong> Severe dysregulation; active SIB (head hitting against concrete) posing immediate risk of harm.<br><strong>Interventions:</strong> Verbal de-escalation, weighted blanket, offered support. Youth refused and escalated.<br><strong>Authorization:</strong> AOD P. Green authorized via radio at 19:00.<br><strong>Debrief:</strong> Control restored. Coping skills identified. Clinical team notified."},
+  {n:33, title:"Room Restriction", body:"<strong>Definition:</strong> A disciplinary action in an area segregated from other residents. The Seclusion Room CANNOT be used.<br><br><strong>Child Access Rights:</strong> Normal meals, clinical/program services, educational activities, hygiene privileges<br><br><strong>Monitoring:</strong> Every 10 mins (first 12 hrs); every 15 mins thereafter. If &gt;24 hours: written plan required, re-evaluated daily.<br><strong>Documentation required:</strong> Specific behavior, failed alternatives, start/end times, monitoring reports"},
+  {n:34, title:"Consent to Treatment and Placement (Section 5)", body:"<strong>Oral Consent:</strong> Minimum oral consent with a witness within <strong>48 hours</strong> from parent/legal guardian. Covers placement, routine health care, and emergency medical/dental/psychological care.<br><br><strong>Written Consent:</strong> Must follow oral consent within <strong>four (4) business days</strong>.<br><br><strong>Self-Placement:</strong> If child self-places and consent cannot be obtained, local DFS office must be notified within 48 hours."},
+  {n:35, title:"Nutrition (Section 14)", body:"&bull; All facilities must provide nutritional, well-balanced meals and snacks.<br>&bull; Therapeutic and religious diets must be available with proper authorization.<br>&bull; Must meet USDA minimum daily requirements; additional portions available.<br><br><strong>PROHIBITIONS:</strong><br>&#10007; No withholding food/drink as discipline<br>&#10007; No forcing a child to eat or drink"},
+  {n:36, title:"Transportation (Section 15)", body:"&bull; <strong>Vehicles:</strong> Must be clean, safe, comply with safety laws; equipped with first aid kit and fire extinguisher.<br>&bull; <strong>Staffing Ratio:</strong> Never more than 6 children to 1 staff (adjusted based on needs).<br>&bull; <strong>Operator:</strong> Must be at least 21 years old with appropriate driver's license.<br>&bull; <strong>Safety Belts:</strong> All occupants must wear seat belts. Child safety restraint systems per state law."},
+  {n:37, title:"Religion (Section 28)", body:"&bull; Must respect religious preference and ensure opportunities to participate in services of choice.<br>&bull; If required, information must be shared and consent obtained at admission.<br>&bull; Staff CANNOT require, coerce, or discriminate based on participation.<br>&bull; No rewards for choosing to participate.<br>&bull; Account for racial, cultural, ethnic, and religious backgrounds in activities."},
+  {n:38, title:"Staff Supervision & Ratios (Sections 9 & 6)", body:"<strong>Staffing Ratios:</strong><br>&bull; Daytime/Evening: 1:6 (staff to children)<br>&bull; Nighttime Sleeping (1:10): Operative alarm system required<br>&bull; Nighttime Awake: Min. 3 random bedroom checks/hour, documented<br><br><strong>Standards:</strong><br>&bull; Electronic surveillance FORBIDDEN in place of direct care staff<br>&bull; Staff must always be present when a child is in the facility<br>&bull; 24/7 on-call availability required"},
+  {n:39, title:"Youth Hotline", body:"Youth Hotline is open to all residents of a licensed facility in Wyoming.<br><br><strong>Reportable Concerns:</strong><br>&bull; Abuse or neglect<br>&bull; Immediate danger<br>&bull; Child or parent rights violations<br>&bull; Unresolved grievances filed with the facility<br><br>Contact: Wyoming Department of Family Services Licensing / Local DFS office"},
+  {n:40, title:"Resident Rights & Family Contact (Section 12)", body:"<strong>Core Rights:</strong><br>&bull; Free from abuse, exploitation, retaliation, and neglect<br>&bull; Equal access to services regardless of identity or status<br>&bull; Right to dignity, respect, and individualized care<br>&bull; Right to personal privacy (within safety protocols)<br>&bull; Right to legal access and confidential counsel<br><br><strong>Family Contact:</strong> Permitted unless parental rights are terminated or not in child's best interest."},
+  {n:41, title:"Grievance Procedures & Youth Hotline (Section 29)", body:"&bull; Written policies governing the grievance process must be developed and maintained.<br>&bull; Policy must be explained to child and parent/guardian at admission.<br>&bull; Must include option to notify DFS if grievance is not resolved satisfactorily.<br>&bull; Toll-free hotline number must be displayed in all living spaces.<br><br><strong>Reportable:</strong> Abuse &amp; Neglect, Immediate Danger, Rights Violations, Unresolved Grievances"},
+  {n:42, title:"Records & Confidentiality (Section 32)", body:"<strong>Child Records:</strong> HIPAA, 42 CFR Part 2, &amp; FERPA compliance mandatory. Locked hard copies; password-protected electronic records. Retain for 6 years from last involvement.<br><br><strong>Staff Records:</strong> Education/training verification, work history, health screenings (TB/Hep B), policy review sign-offs, abuse/neglect registry status.<br><br>All documentation must adhere to DFS Confidentiality regulations."},
+  {n:43, title:"Resources & Contact Information", body:"<strong>Regulatory Resources:</strong><br>&bull; Department Rules: <em>rules.wyo.gov/Search.aspx?mode=1</em> &rarr; Select 'Family Services, Dept (049)' then 'Providers of Substitute Care Services'<br>&bull; DFS Provider Portal: <em>dfs.wyo.gov/providers/substitute-care/</em><br><br><strong>Contact Liaison:</strong><br>Lee Thurmond &bull; Department of Family Services<br>lee.thurmond@wyo.gov &bull; 307.461.2641"}
+];
+
+var slideIdx = 0;
+
+function renderSlide() {
+  var s = SLIDES[slideIdx];
+  document.getElementById('slide-num').textContent = s.n + ' / ' + SLIDES.length;
+  document.getElementById('slide-title').textContent = s.title;
+  document.getElementById('slide-body').innerHTML = s.body;
+  document.getElementById('slide-prev').disabled = slideIdx === 0;
+  document.getElementById('slide-next').disabled = slideIdx === SLIDES.length - 1;
+  document.getElementById('slide-progress').style.width = ((slideIdx+1)/SLIDES.length*100) + '%';
+}
+
+function slideNav(dir) {
+  slideIdx = Math.max(0, Math.min(SLIDES.length-1, slideIdx + dir));
+  renderSlide();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() { renderSlide(); });
+
+document.addEventListener("DOMContentLoaded", function(){ renderSlide(); });
+</script>
+</body>
+</html>
